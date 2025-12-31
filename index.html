@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#ec407a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Mom's Pump Mate Pro</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌸</text></svg>">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #ec407a;
+            --primary-dark: #d81b60;
+            --secondary: #f8bbd0;
+            --bg: #fce4ec;
+            --white: #ffffff;
+            --text: #424242;
+            --shadow: 0 4px 12px rgba(236, 64, 122, 0.15);
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 0;
+            color: var(--text);
+            padding-bottom: 90px;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        /* HEADER */
+        .header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: var(--white);
+            padding: 30px 20px 40px;
+            text-align: center;
+            border-bottom-left-radius: 30px;
+            border-bottom-right-radius: 30px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .header h1 { margin: 0; font-size: 24px; letter-spacing: 0.5px; }
+        .header p { margin: 5px 0 0; font-size: 13px; opacity: 0.9; }
+
+        /* CARDS */
+        .container { padding: 0 15px; max-width: 600px; margin: -30px auto 0; position: relative; z-index: 10; }
+        .card {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(255,255,255,0.6);
+        }
+        .card-title {
+            margin-top: 0;
+            color: var(--primary);
+            font-size: 17px;
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        /* TIMER SECTION */
+        .timer-wrapper {
+            position: relative;
+            text-align: center;
+            margin: 10px 0;
+        }
+        .timer-display {
+            font-size: 52px;
+            font-weight: 800;
+            color: var(--text);
+            font-variant-numeric: tabular-nums;
+        }
+        .btn-group { display: flex; gap: 12px; justify-content: center; margin-top: 10px; }
+        .btn {
+            border: none;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            flex: 1;
+            font-size: 15px;
+            transition: transform 0.1s;
+        }
+        .btn-start { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(236, 64, 122, 0.3); }
+        .btn-reset { background: #eceff1; color: #546e7a; }
+        .btn:active { transform: scale(0.96); }
+
+        /* INPUT FORM */
+        .input-row { display: flex; gap: 15px; margin-bottom: 15px; }
+        .input-group { flex: 1; }
+        .input-group label { font-size: 11px; font-weight: 700; color: #777; display: block; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #eee;
+            border-radius: 12px;
+            font-size: 18px;
+            box-sizing: border-box;
+            text-align: center;
+            color: var(--primary);
+            font-weight: bold;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        input[type="number"]:focus { border-color: var(--primary); background: #fffbfd; }
+        
+        /* STATS BOX */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #f8bbd0, #f48fb1);
+            color: #880e4f;
+            padding: 15px;
+            border-radius: 15px;
+            text-align: center;
+        }
+        .stat-card.main {
+            background: linear-gradient(135deg, var(--secondary), var(--primary));
+            color: white;
+            grid-column: span 2;
+        }
+        .stat-val { font-size: 26px; font-weight: bold; margin: 5px 0; }
+        .stat-label { font-size: 12px; opacity: 0.9; }
+
+        /* TABLE */
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th { text-align: left; color: #999; font-weight: 600; font-size: 11px; padding-bottom: 8px; text-transform: uppercase;}
+        td { padding: 12px 0; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+        .log-time { font-weight: bold; color: var(--text); font-size: 15px; }
+        .log-date { font-size: 11px; color: #999; margin-top: 2px; }
+        .log-total { color: var(--primary); font-weight: 800; font-size: 15px; }
+        .btn-del {
+            background: #ffebee; color: #c62828; border: none;
+            width: 30px; height: 30px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-weight: bold; font-size: 18px;
+        }
+
+        /* SCHEDULE & INFO */
+        .schedule-item { 
+            display: flex; justify-content: space-between; 
+            padding: 12px 10px; border-radius: 10px;
+            margin-bottom: 6px; font-size: 14px; color: #555;
+            border-left: 4px solid transparent;
+        }
+        .schedule-item.active {
+            background-color: #fce4ec;
+            border-left-color: var(--primary);
+            color: var(--primary-dark);
+            font-weight: 600;
+        }
+        .schedule-time { font-family: monospace; font-size: 15px; }
+
+        /* NAVIGATION BOTTOM */
+        .nav-bottom {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            display: flex; justify-content: space-around;
+            padding: 10px 0 20px;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.05);
+            border-top-left-radius: 20px; border-top-right-radius: 20px;
+            z-index: 100;
+        }
+        .nav-item {
+            text-align: center; font-size: 10px; color: #bdbdbd;
+            background: none; border: none; padding: 5px 15px;
+            cursor: pointer; transition: 0.2s;
+        }
+        .nav-icon { font-size: 20px; display: block; margin-bottom: 4px; }
+        .nav-item.active { color: var(--primary); transform: translateY(-2px); font-weight: 600; }
+        
+        .page { display: none; animation: fadeIn 0.3s; padding-bottom: 20px; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>🌸 Mom's Pump Mate</h1>
+        <p>Pejuang ASI Tracker & Schedule</p>
+    </div>
+
+    <div id="page-home" class="page active container">
+        
+        <div class="card">
+            <h3 class="card-title">⏱️ Stopwatch Pumping</h3>
+            <div class="timer-wrapper">
+                <div class="timer-display" id="timer">00:00</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-start" onclick="toggleTimer()" id="btnStart">MULAI</button>
+                <button class="btn btn-reset" onclick="resetTimer()">RESET</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 class="card-title">📝 Catat Hasil (ml)</h3>
+            <div class="input-row">
+                <div class="input-group">
+                    <label>Payudara Kiri</label>
+                    <input type="number" id="volKiri" placeholder="0" inputmode="numeric">
+                </div>
+                <div class="input-group">
+                    <label>Payudara Kanan</label>
+                    <input type="number" id="volKanan" placeholder="0" inputmode="numeric">
+                </div>
+            </div>
+            <button class="btn btn-start" onclick="saveLog()" style="width:100%">SIMPAN DATA</button>
+        </div>
+
+        <div class="card">
+            <h3 class="card-title">📈 Grafik 7 Hari Terakhir</h3>
+            <div style="position: relative; height: 200px; width: 100%;">
+                <canvas id="pumpChart"></canvas>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card main">
+                <div class="stat-label">Total Hari Ini</div>
+                <div class="stat-val"><span id="totalToday">0</span> ml</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Sesi Hari Ini</div>
+                <div class="stat-val"><span id="countToday">0</span>x</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Rata-rata/Sesi</div>
+                <div class="stat-val"><span id="avgToday">0</span> ml</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="page-history" class="page container">
+        <div class="card">
+            <h3 class="card-title">
+                📅 Riwayat
+                <button onclick="exportToWA()" style="background:none; border:none; color:var(--primary); font-size:12px; font-weight:bold; cursor:pointer;">📤 Share WA</button>
+            </h3>
+            <div style="overflow-x: auto; max-height: 400px; overflow-y: auto;">
+                <table id="logTable">
+                    <thead>
+                        <tr>
+                            <th>Waktu</th>
+                            <th style="text-align:center">Kiri</th>
+                            <th style="text-align:center">Kanan</th>
+                            <th style="text-align:right">Total</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="logList">
+                        </tbody>
+                </table>
+                <div id="emptyState" style="text-align:center; padding: 20px; color:#999; display:none;">Belum ada data</div>
+            </div>
+            <div style="text-align: center; margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
+                <button class="btn btn-reset" onclick="clearData()" style="font-size: 12px; padding: 8px 15px; width:auto; background:#ffcdd2; color:#c62828;">🗑️ Hapus Semua Data</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="page-info" class="page container">
+        <div class="card">
+            <h3 class="card-title">⏰ Jadwal Ideal (Per 3 Jam)</h3>
+            <div id="scheduleList">
+                </div>
+            <p style="font-size:11px; color:#888; margin-top:10px; text-align:center;">*Jadwal yang di-highlight adalah sesi berikutnya.</p>
+        </div>
+
+        <div class="card">
+            <h3 class="card-title">🥗 Booster Alami</h3>
+            <ul style="padding-left: 20px; line-height: 1.6; font-size: 14px; color: #555;">
+                <li><strong>Protein:</strong> Daging sapi, ayam, telur, ikan gabus/salmon.</li>
+                <li><strong>Sayuran:</strong> Daun katuk, kelor, bayam, brokoli.</li>
+                <li><strong>Lemak Sehat:</strong> Alpukat, kacang almond, minyak zaitun.</li>
+                <li><strong>Cairan:</strong> Minum air putih minimal 3L sehari.</li>
+                <li><strong>Pikiran:</strong> Bahagia & rileks adalah booster terbaik! ❤️</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="nav-bottom">
+        <button class="nav-item active" onclick="switchPage('home', this)">
+            <span class="nav-icon">🏠</span>Tracker
+        </button>
+        <button class="nav-item" onclick="switchPage('history', this)">
+            <span class="nav-icon">📜</span>Riwayat
+        </button>
+        <button class="nav-item" onclick="switchPage('info', this)">
+            <span class="nav-icon">💡</span>Info
+        </button>
+    </div>
+
+    <script>
+        // --- LOGIC TIMER (STOPWATCH) ---
+        let secondsElapsed = 0; // Mulai dari 0
+        let timerId = null;
+        let isRunning = false;
+        const limitSeconds = 24 * 60 * 60; // Batas 24 Jam
+
+        function updateDisplay() {
+            // Hitung Jam, Menit, Detik
+            const h = Math.floor(secondsElapsed / 3600);
+            const m = Math.floor((secondsElapsed % 3600) / 60);
+            const s = secondsElapsed % 60;
+
+            const hStr = h.toString().padStart(2, '0');
+            const mStr = m.toString().padStart(2, '0');
+            const sStr = s.toString().padStart(2, '0');
+
+            // Jika sudah lebih dari 1 jam, tampilkan format HH:MM:SS
+            // Jika belum, tampilkan MM:SS
+            if (h > 0) {
+                document.getElementById('timer').innerText = `${hStr}:${mStr}:${sStr}`;
+            } else {
+                document.getElementById('timer').innerText = `${mStr}:${sStr}`;
+            }
+        }
+
+        function toggleTimer() {
+            const btn = document.getElementById('btnStart');
+            if (isRunning) {
+                // Pause
+                clearInterval(timerId);
+                btn.innerText = "LANJUT";
+                btn.style.background = "#ec407a";
+            } else {
+                // Start / Lanjut
+                timerId = setInterval(() => {
+                    secondsElapsed++; // Hitung maju
+                    
+                    if (secondsElapsed >= limitSeconds) {
+                        clearInterval(timerId);
+                        isRunning = false;
+                        alert("Moms, timer sudah mencapai batas 24 jam.");
+                        btn.innerText = "MULAI";
+                        btn.style.background = "#ec407a";
+                    }
+                    updateDisplay();
+                }, 1000);
+                
+                btn.innerText = "PAUSE";
+                btn.style.background = "#f06292";
+            }
+            isRunning = !isRunning;
+        }
+
+        function resetTimer() {
+            clearInterval(timerId);
+            secondsElapsed = 0; // Reset ke 0
+            isRunning = false;
+            document.getElementById('btnStart').innerText = "MULAI";
+            document.getElementById('btnStart').style.background = "#ec407a";
+            updateDisplay();
+        }
+
+        // --- LOGIC DATABASE & UI (Sama seperti sebelumnya) ---
+        let pumpChart = null;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            renderLogs();
+            renderSchedule();
+        });
+
+        function saveLog() {
+            const k = parseInt(document.getElementById('volKiri').value) || 0;
+            const n = parseInt(document.getElementById('volKanan').value) || 0;
+            
+            if (k === 0 && n === 0) {
+                alert("Masukkan jumlah ml minimal salah satu sisi ya Moms!");
+                return;
+            }
+
+            const log = {
+                id: Date.now(),
+                date: new Date().toISOString(),
+                left: k,
+                right: n,
+                total: k + n
+            };
+
+            let logs = JSON.parse(localStorage.getItem('pumpLogs')) || [];
+            logs.push(log);
+            localStorage.setItem('pumpLogs', JSON.stringify(logs));
+
+            document.getElementById('volKiri').value = '';
+            document.getElementById('volKanan').value = '';
+            
+            renderLogs();
+            alert("✅ Data berhasil disimpan!");
+            
+            document.querySelector('.stats-grid').scrollIntoView({behavior: 'smooth'});
+        }
+
+        function renderLogs() {
+            let logs = JSON.parse(localStorage.getItem('pumpLogs')) || [];
+            logs.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            const list = document.getElementById('logList');
+            const emptyState = document.getElementById('emptyState');
+            list.innerHTML = '';
+            
+            if (logs.length === 0) {
+                emptyState.style.display = 'block';
+            } else {
+                emptyState.style.display = 'none';
+            }
+            
+            let todayTotal = 0;
+            let todayCount = 0;
+            
+            const now = new Date();
+            const todayStr = now.toLocaleDateString();
+
+            // CHART DATA PREP
+            const last7Days = {};
+            const dayLabels = [];
+            
+            for(let i=6; i>=0; i--) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                const label = d.toLocaleDateString('id-ID', {weekday:'short'});
+                const dateKey = d.toLocaleDateString(); 
+                last7Days[dateKey] = { label: label, total: 0 };
+                if (!dayLabels.includes(label)) dayLabels.push(label); 
+            }
+
+            logs.forEach(log => {
+                const d = new Date(log.date);
+                const timeStr = d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                const dateStr = d.toLocaleDateString('id-ID', {day: 'numeric', month: 'short'});
+                const fullDateStr = d.toLocaleDateString();
+
+                if (fullDateStr === todayStr) {
+                    todayTotal += log.total;
+                    todayCount++;
+                }
+
+                if (last7Days.hasOwnProperty(fullDateStr)) {
+                    last7Days[fullDateStr].total += log.total;
+                }
+
+                const row = `
+                    <tr>
+                        <td>
+                            <div class="log-time">${timeStr}</div>
+                            <div class="log-date">${dateStr}</div>
+                        </td>
+                        <td style="text-align:center">${log.left}</td>
+                        <td style="text-align:center">${log.right}</td>
+                        <td style="text-align:right" class="log-total">${log.total} ml</td>
+                        <td style="text-align:right"><button class="btn-del" onclick="deleteLog(${log.id})">×</button></td>
+                    </tr>
+                `;
+                list.innerHTML += row;
+            });
+
+            document.getElementById('totalToday').innerText = todayTotal;
+            document.getElementById('countToday').innerText = todayCount;
+            document.getElementById('avgToday').innerText = todayCount > 0 ? Math.round(todayTotal/todayCount) : 0;
+
+            const chartLabels = Object.values(last7Days).map(d => d.label);
+            const chartData = Object.values(last7Days).map(d => d.total);
+            
+            updateChart(chartLabels, chartData);
+        }
+
+        function updateChart(labels, data) {
+            const ctx = document.getElementById('pumpChart').getContext('2d');
+            
+            if (pumpChart) {
+                pumpChart.destroy();
+            }
+
+            pumpChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Total (ml)',
+                        data: data,
+                        backgroundColor: '#f48fb1',
+                        borderRadius: 5,
+                        hoverBackgroundColor: '#ec407a'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, grid: {display: false}, border: {display: false} },
+                        x: { grid: {display: false}, border: {display: false} }
+                    }
+                }
+            });
+        }
+
+        function deleteLog(id) {
+            if(confirm("Hapus data ini?")) {
+                let logs = JSON.parse(localStorage.getItem('pumpLogs')) || [];
+                logs = logs.filter(l => l.id !== id);
+                localStorage.setItem('pumpLogs', JSON.stringify(logs));
+                renderLogs();
+            }
+        }
+
+        function clearData() {
+            if(confirm("⚠️ Yakin ingin menghapus SEMUA riwayat? Data tidak bisa kembali.")) {
+                localStorage.removeItem('pumpLogs');
+                renderLogs();
+            }
+        }
+
+        function exportToWA() {
+            let logs = JSON.parse(localStorage.getItem('pumpLogs')) || [];
+            if(logs.length === 0) { alert("Belum ada data untuk diekspor!"); return; }
+
+            let text = "🌸 *Laporan Pumping*\n\n";
+            logs.slice(0, 15).forEach(log => {
+                const d = new Date(log.date);
+                const dateStr = d.toLocaleDateString('id-ID', {day: 'numeric', month: 'short'});
+                text += `📅 ${dateStr} ${d.toLocaleTimeString().slice(0,5)}\n🍼 Kiri: ${log.left} | Kanan: ${log.right} | *Total: ${log.total}ml*\n\n`;
+            });
+            
+            text += `_Di-generate oleh Mom's Pump Mate_`;
+            const encoded = encodeURIComponent(text);
+            window.open(`https://wa.me/?text=${encoded}`, '_blank');
+        }
+
+        // --- NAVIGASI HALAMAN ---
+        function switchPage(pageName, btnElement) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('page-' + pageName).classList.add('active');
+            
+            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+            btnElement.classList.add('active');
+            
+            if(pageName === 'home') {
+               renderLogs(); 
+            }
+        }
+
+        // --- RENDER JADWAL (SMART HIGHLIGHT) ---
+        function renderSchedule() {
+            const schedules = [
+                {h: 5, m: 0, l: "Morning Pump ☀️"},
+                {h: 8, m: 0, l: "Sesi Pagi"},
+                {h: 11, m: 0, l: "Menjelang Siang"},
+                {h: 14, m: 0, l: "Power Pumping 💪"},
+                {h: 17, m: 0, l: "Sesi Sore"},
+                {h: 20, m: 0, l: "Sesi Malam"},
+                {h: 23, m: 0, l: "Sebelum Tidur 😴"},
+                {h: 26, m: 30, l: "Midnight Pump 🌙"} 
+            ];
+
+            const now = new Date();
+            const currentHour = now.getHours();
+            const currentMin = now.getMinutes();
+            let currentTimeVal = currentHour * 60 + currentMin;
+            
+            if (currentHour < 4) currentTimeVal += 24 * 60;
+
+            let nextIndex = 0; 
+            const schedWithMins = schedules.map((s, index) => {
+                return { ...s, mins: s.h * 60 + s.m, originalIndex: index };
+            }).sort((a,b) => a.mins - b.mins);
+
+            for (let i = 0; i < schedWithMins.length; i++) {
+                if (schedWithMins[i].mins > currentTimeVal) {
+                    nextIndex = i;
+                    break;
+                }
+            }
+            
+            const div = document.getElementById('scheduleList');
+            div.innerHTML = '';
+
+            schedWithMins.forEach((s, i) => {
+                let displayH = s.h;
+                if (displayH >= 24) displayH -= 24;
+                
+                const timeStr = `${displayH.toString().padStart(2,'0')}:${s.m.toString().padStart(2,'0')}`;
+                const isActive = (i === nextIndex) ? 'active' : '';
+                
+                div.innerHTML += `
+                    <div class="schedule-item ${isActive}">
+                        <span class="schedule-time">${timeStr}</span>
+                        <span>${s.l}</span>
+                    </div>`;
+            });
+        }
+        
+        setInterval(renderSchedule, 60000);
+    </script>
+</body>
+</html>
