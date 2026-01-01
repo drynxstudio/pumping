@@ -95,20 +95,23 @@
         .input-row { display: flex; gap: 15px; margin-bottom: 15px; }
         .input-group { flex: 1; }
         .input-group label { font-size: 11px; font-weight: 700; color: #777; display: block; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
-        input[type="number"] {
+        
+        input[type="number"], input[type="datetime-local"] {
             width: 100%;
             padding: 12px;
             border: 2px solid #eee;
             border-radius: 12px;
-            font-size: 18px;
+            font-size: 16px; /* Slightly smaller for date */
             box-sizing: border-box;
-            text-align: center;
             color: var(--primary);
             font-weight: bold;
             outline: none;
             transition: border-color 0.2s;
+            background: #fff;
+            font-family: inherit;
         }
-        input[type="number"]:focus { border-color: var(--primary); background: #fffbfd; }
+        input[type="number"] { text-align: center; font-size: 18px; }
+        input:focus { border-color: var(--primary); background: #fffbfd; }
         
         /* STATS BOX */
         .stats-grid {
@@ -138,6 +141,19 @@
         td { padding: 12px 0; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
         .log-time { font-weight: bold; color: var(--text); font-size: 15px; }
         .log-date { font-size: 11px; color: #999; margin-top: 2px; }
+        
+        /* EXPIRY TAG */
+        .exp-tag {
+            display: inline-block;
+            font-size: 10px;
+            margin-top: 4px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        .exp-safe { background-color: #e8f5e9; color: #2e7d32; }
+        .exp-danger { background-color: #ffebee; color: #c62828; }
+
         .log-total { color: var(--primary); font-weight: 800; font-size: 15px; }
         .btn-del {
             background: #ffebee; color: #c62828; border: none;
@@ -208,6 +224,12 @@
 
         <div class="card">
             <h3 class="card-title">📝 Catat Hasil (ml)</h3>
+            
+            <div class="input-group" style="margin-bottom: 15px;">
+                <label>📅 Waktu Pumping (Biarkan kosong untuk "Sekarang")</label>
+                <input type="datetime-local" id="manualDate">
+            </div>
+
             <div class="input-row">
                 <div class="input-group">
                     <label>Payudara Kiri</label>
@@ -254,7 +276,7 @@
                 <table id="logTable">
                     <thead>
                         <tr>
-                            <th>Waktu</th>
+                            <th>Waktu & Expired</th>
                             <th style="text-align:center">Kiri</th>
                             <th style="text-align:center">Kanan</th>
                             <th style="text-align:right">Total</th>
@@ -306,13 +328,12 @@
 
     <script>
         // --- LOGIC TIMER (STOPWATCH) ---
-        let secondsElapsed = 0; // Mulai dari 0
+        let secondsElapsed = 0; 
         let timerId = null;
         let isRunning = false;
-        const limitSeconds = 24 * 60 * 60; // Batas 24 Jam
+        const limitSeconds = 24 * 60 * 60; 
 
         function updateDisplay() {
-            // Hitung Jam, Menit, Detik
             const h = Math.floor(secondsElapsed / 3600);
             const m = Math.floor((secondsElapsed % 3600) / 60);
             const s = secondsElapsed % 60;
@@ -321,8 +342,6 @@
             const mStr = m.toString().padStart(2, '0');
             const sStr = s.toString().padStart(2, '0');
 
-            // Jika sudah lebih dari 1 jam, tampilkan format HH:MM:SS
-            // Jika belum, tampilkan MM:SS
             if (h > 0) {
                 document.getElementById('timer').innerText = `${hStr}:${mStr}:${sStr}`;
             } else {
@@ -333,15 +352,12 @@
         function toggleTimer() {
             const btn = document.getElementById('btnStart');
             if (isRunning) {
-                // Pause
                 clearInterval(timerId);
                 btn.innerText = "LANJUT";
                 btn.style.background = "#ec407a";
             } else {
-                // Start / Lanjut
                 timerId = setInterval(() => {
-                    secondsElapsed++; // Hitung maju
-                    
+                    secondsElapsed++; 
                     if (secondsElapsed >= limitSeconds) {
                         clearInterval(timerId);
                         isRunning = false;
@@ -360,14 +376,14 @@
 
         function resetTimer() {
             clearInterval(timerId);
-            secondsElapsed = 0; // Reset ke 0
+            secondsElapsed = 0; 
             isRunning = false;
             document.getElementById('btnStart').innerText = "MULAI";
             document.getElementById('btnStart').style.background = "#ec407a";
             updateDisplay();
         }
 
-        // --- LOGIC DATABASE & UI (Sama seperti sebelumnya) ---
+        // --- LOGIC DATABASE & UI ---
         let pumpChart = null;
 
         document.addEventListener("DOMContentLoaded", () => {
@@ -378,15 +394,24 @@
         function saveLog() {
             const k = parseInt(document.getElementById('volKiri').value) || 0;
             const n = parseInt(document.getElementById('volKanan').value) || 0;
-            
+            const manualDateStr = document.getElementById('manualDate').value;
+
             if (k === 0 && n === 0) {
                 alert("Masukkan jumlah ml minimal salah satu sisi ya Moms!");
                 return;
             }
 
+            // Tentukan Waktu: Jika manual diisi pakai itu, jika kosong pakai sekarang
+            let finalDate;
+            if (manualDateStr) {
+                finalDate = new Date(manualDateStr);
+            } else {
+                finalDate = new Date();
+            }
+
             const log = {
                 id: Date.now(),
-                date: new Date().toISOString(),
+                date: finalDate.toISOString(),
                 left: k,
                 right: n,
                 total: k + n
@@ -396,17 +421,21 @@
             logs.push(log);
             localStorage.setItem('pumpLogs', JSON.stringify(logs));
 
+            // Reset Form
             document.getElementById('volKiri').value = '';
             document.getElementById('volKanan').value = '';
+            document.getElementById('manualDate').value = ''; // Reset tanggal
             
             renderLogs();
             alert("✅ Data berhasil disimpan!");
             
-            document.querySelector('.stats-grid').scrollIntoView({behavior: 'smooth'});
+            // Scroll sedikit ke bawah agar user melihat update
+            // document.querySelector('.stats-grid').scrollIntoView({behavior: 'smooth'});
         }
 
         function renderLogs() {
             let logs = JSON.parse(localStorage.getItem('pumpLogs')) || [];
+            // Sort Descending (Terbaru di atas)
             logs.sort((a, b) => new Date(b.date) - new Date(a.date));
 
             const list = document.getElementById('logList');
@@ -444,6 +473,17 @@
                 const dateStr = d.toLocaleDateString('id-ID', {day: 'numeric', month: 'short'});
                 const fullDateStr = d.toLocaleDateString();
 
+                // Hitung Expired (4 Jam Suhu Ruang)
+                const expiryTime = new Date(d.getTime() + (4 * 60 * 60 * 1000));
+                let expiryHtml = '';
+                
+                if (now > expiryTime) {
+                    expiryHtml = `<span class="exp-tag exp-danger">⚠️ Expired</span>`;
+                } else {
+                    const expTimeStr = expiryTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    expiryHtml = `<span class="exp-tag exp-safe">Exp: ${expTimeStr}</span>`;
+                }
+
                 if (fullDateStr === todayStr) {
                     todayTotal += log.total;
                     todayCount++;
@@ -458,6 +498,7 @@
                         <td>
                             <div class="log-time">${timeStr}</div>
                             <div class="log-date">${dateStr}</div>
+                            ${expiryHtml}
                         </td>
                         <td style="text-align:center">${log.left}</td>
                         <td style="text-align:center">${log.right}</td>
@@ -556,7 +597,7 @@
             }
         }
 
-        // --- RENDER JADWAL (SMART HIGHLIGHT) ---
+        // --- RENDER JADWAL ---
         function renderSchedule() {
             const schedules = [
                 {h: 5, m: 0, l: "Morning Pump ☀️"},
